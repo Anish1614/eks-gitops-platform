@@ -191,6 +191,26 @@ We will:
 kubectl get pods -n monitoring | grep alertmanager
 kubectl port-forward svc/monitoring-kube-prometheus-alertmanager -n monitoring 9093
 
+Create Custom High CPU Alert
+Trigger Alert
+  - Run load generator again
+Simulate OOM Kill = make memory very low and run load generation again
+
+# =============================================================================
+# PHASE 6 — Centralized Logging (Real Platform Capability)
+# =============================================================================
+Now we add log aggregation using:
+Grafana
+Loki (log backend)
+Promtail (log collector)
+
+install Loki
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install loki grafana/loki-stack \
+  --namespace monitoring
+
+
 # =============================================================================
 # UTILITY COMMANDS
 # =============================================================================

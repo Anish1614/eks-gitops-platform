@@ -11,3 +11,5 @@
 # alertmanager image
 ![alt text](image-5.png)
 
+# loki image
+![alt text](image-2.png)

@@ -1,5 +1,5 @@
 # =============================================================================
-# 🚀 PRODUCTION-STYLE KUBERNETES PLATFORM - COMPLETE COMMAND REFERENCE
+# PRODUCTION-STYLE KUBERNETES PLATFORM - COMPLETE COMMAND REFERENCE
 # =============================================================================
 
 # =============================================================================
@@ -88,9 +88,8 @@ Simple NGINX app
 Through Git
 Managed by ArgoCD
 
-# =============================================================================
+ 
 # PHASE : METRICS SERVER & HPA SETUP
-# =============================================================================
 
 # Install Metrics Server
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -114,44 +113,8 @@ kubectl top nodes
 kubectl top pods -n kube-system
 
 # Create HPA for NGINX (example)
-cat <<EOF > hpa-nginx.yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: nginx-hpa
-  namespace: dev
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: nginx
-  minReplicas: 2
-  maxReplicas: 6
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 50
-  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 30
-      policies:
-      - type: Percent
-        value: 100
-        periodSeconds: 15
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Percent
-        value: 10
-        periodSeconds: 60
-EOF
 
-kubectl apply -f hpa-nginx.yaml
-
-# Verify HPA
+PHASE  — Simulate Load
 kubectl get hpa -n dev
 kubectl describe hpa nginx-hpa -n dev
 
@@ -180,6 +143,10 @@ helm install monitoring prometheus-community/kube-prometheus-stack \
   --set grafana.enabled=true \
   --set prometheus.enabled=true \
   --set alertmanager.enabled=true
+or simply 
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
 
 # Wait for all pods to be ready
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=grafana -n monitoring --timeout=300s
@@ -208,102 +175,21 @@ kubectl port-forward svc/monitoring-kube-prometheus-prometheus -n monitoring 909
 # - kube_pod_container_resource_requests
 # - kube_horizontalpodautoscaler_status_current_replicas
 
+
+
 # =============================================================================
-# PHASE 5: APPLICATION DEPLOYMENT (GitOps Workflow)
+# PHASE 5 — Alerting & Incident Simulation
 # =============================================================================
+We will:
 
-# Directory structure setup
-mkdir -p eks-gitops-platform/{kubernetes/apps/nginx,argocd/applications}
+1️ Create custom alert rule (High CPU)
+2️ Trigger alert intentionally
+3️ Observe it in Alertmanager
+4️ Simulate OOM kill
+5️ Observe restart metrics
 
-# NGINX Deployment with resource limits
-cat <<EOF > eks-gitops-platform/kubernetes/apps/nginx/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx
-  namespace: dev
-  labels:
-    app: nginx
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: nginx
-  template:
-    metadata:
-      labels:
-        app: nginx
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "100m"
-          limits:
-            memory: "128Mi"
-            cpu: "200m"
-EOF
-
-# NGINX Service
-cat <<EOF > eks-gitops-platform/kubernetes/apps/nginx/service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-  namespace: dev
-spec:
-  selector:
-    app: nginx
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
-EOF
-
-# Kustomization
-cat <<EOF > eks-gitops-platform/kubernetes/apps/nginx/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - deployment.yaml
-  - service.yaml
-EOF
-
-# Argo CD Application for NGINX
-cat <<EOF > eks-gitops-platform/argocd/applications/nginx-dev.yaml
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: nginx-dev
-  namespace: argocd
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/YOUR_USERNAME/eks-gitops-platform.git
-    targetRevision: HEAD
-    path: kubernetes/apps/nginx
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: dev
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
-EOF
-
-# Apply Argo CD Application
-kubectl apply -f eks-gitops-platform/argocd/applications/nginx-dev.yaml
-
-# Verify application sync
-argocd app get nginx-dev
-kubectl get pods -n dev
+kubectl get pods -n monitoring | grep alertmanager
+kubectl port-forward svc/monitoring-kube-prometheus-alertmanager -n monitoring 9093
 
 # =============================================================================
 # UTILITY COMMANDS

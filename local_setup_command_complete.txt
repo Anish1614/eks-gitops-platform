@@ -1,124 +1,3 @@
-project name: Production-Ready Microservices Platform on AWS EKS (GitOps + Observability)
----
-
-# 🚀 Project Summary — Production-Style Kubernetes Platform (Local First)
-
-we designed and implemented a **GitOps-driven, autoscaling Kubernetes platform** using a local Kind cluster, structured exactly like a production AWS EKS environment.
-
----
-
-# 1️⃣ Cluster Foundation
-
-### Kubernetes Cluster
-
-* Created multi-node cluster using **Kind**
-* Structured namespaces:
-
-  * `dev`
-  * `prod`
-  * `monitoring`
-  * `argocd`
-
-This mirrors real environment isolation in **Amazon EKS**.
-
----
-
-# 2️⃣ GitOps Implementation
-
-### Installed:
-
-* **Argo CD**
-
-### Achieved:
-
-* Declarative deployment model
-* Automated sync from GitHub
-* Self-healing enabled
-* No manual `kubectl apply` for applications
-
-### Repository Structure (Industry-grade)
-
-```text
-eks-gitops-platform/
-├── kubernetes/apps/nginx/
-├── argocd/applications/
-```
-
-You moved from imperative deployment → **declarative platform management**.
-
----
-
-# 3️⃣ Application Deployment (Resource-Disciplined)
-
-Deployed:
-
-* NGINX microservice
-* Defined CPU & memory requests/limits
-* Structured with Kustomize
-* Managed entirely via Git
-
-This demonstrates:
-
-* Resource governance
-* Workload isolation
-* Production readiness
-
----
-
-# 4️⃣ Horizontal Pod Autoscaler (HPA)
-
-Installed:
-
-* Metrics Server
-
-Configured:
-
-* HPA targeting 50% CPU utilization
-* Min replicas: 2
-* Max replicas: 6
-
-Tested:
-
-* Load generation using busybox
-* Observed automatic scaling
-
-Result:
-
-```
-2 → 3 → 4 pods under load
-```
-
-You validated:
-
-* CPU-based autoscaling
-* Metrics pipeline functioning
-* HPA reconciliation loop working
-
----
-
-# 5️⃣ Observability Stack
-
-Installed via Helm:
-
-* **Prometheus**
-* **Grafana**
-* Alertmanager
-* kube-state-metrics
-* node-exporter
-
-You now have:
-
-* Cluster-level metrics
-* Node-level metrics
-* Namespace-level dashboards
-* Pod-level resource visibility
-* Real-time CPU spikes under load
-
-This transitions you into **observability engineering**.
-
----
-
-
 # =============================================================================
 # 🚀 PRODUCTION-STYLE KUBERNETES PLATFORM - COMPLETE COMMAND REFERENCE
 # =============================================================================
@@ -126,6 +5,10 @@ This transitions you into **observability engineering**.
 # =============================================================================
 # PHASE 1: CLUSTER FOUNDATION (Kind Cluster Setup)
 # =============================================================================
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.23.0/kind-linux-amd64
+chmod +x kind
+sudo mv kind /usr/local/bin/
+
 
 # Create Kind cluster with config
 cat <<EOF > kind-config.yaml
@@ -139,6 +22,28 @@ nodes:
 EOF
 
 kind create cluster --config kind-config.yaml
+
+
+----------------
+for local setup we don't need 2 worker node
+
+# Delete current cluster
+kind delete cluster --name prod-platform
+
+# Create minimal cluster config
+cat <<EOF > kind-config.yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: prod-platform
+nodes:
+  - role: control-plane
+  - role: worker
+EOF
+
+# Create new cluster
+kind create cluster --config kind-config.yaml
+------------------
+
 
 # Verify cluster
 kubectl cluster-info
@@ -174,11 +79,17 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 echo
 
-# Login to Argo CD CLI (optional)
-argocd login localhost:8080 --username admin --password <password-from-above> --insecure
 
 # =============================================================================
-# PHASE 3: METRICS SERVER & HPA SETUP
+# PHASE 3 — Create First Microservice (Production-Style)
+# =============================================================================
+We will deploy:
+Simple NGINX app
+Through Git
+Managed by ArgoCD
+
+# =============================================================================
+# PHASE : METRICS SERVER & HPA SETUP
 # =============================================================================
 
 # Install Metrics Server

@@ -116,8 +116,8 @@ kubectl patch deployment metrics-server -n kube-system --type='json' -p='[{"op":
 ```
 
 ### HPA Configuration
-- **Min Replicas**: 2
-- **Max Replicas**: 6
+- **Min Replicas**: 1
+- **Max Replicas**: 4
 - **Target CPU**: 50%
 
 ### Load Simulation
@@ -200,5 +200,4 @@ Logs are available in **Grafana → Explore → Loki**.
 - **Test Your Alerts**: Alerting rules must be empirically tested via simulation.
 - **Full Visibility**: Production readiness requires the integration of metrics, logs, and alerts.
 
----
-*Built with ❤️ for Platform Engineering*
+

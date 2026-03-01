@@ -83,7 +83,22 @@ To save costs and simplify management, we used **Ingress Groups** to share one A
 
 ---
 
-## 💰 Cost Optimization Strategy
+## � Phase 5 — GitOps with Argo CD
+
+We transitioned from manual `kubectl apply` to a declarative **GitOps** workflow using **Argo CD**.
+
+### Continuous Delivery
+* **Single Source of Truth**: The EKS cluster state is entirely defined in the `kubernetes/apps/k8s_migration` directory of this repository.
+* **Automated Sync**: Argo CD is configured with `automated` sync policy, including `prune: true` and `selfHeal: true`.
+* **Application Manifest**: Managed via [nginx-demo.yaml](file:///c:/Users/anish/Desktop/project/eks-gitops-platform/argocd/applications/nginx-demo.yaml), which tracks the `HEAD` of the repository.
+
+### Benefits Realized
+* **Configuration Drift Prevention**: Any manual changes in the cluster are automatically reverted by Argo CD.
+* **Visibility**: The Argo CD UI provides a clear tree-view of all resources (Services, Deployments, HPAs, Ingresses) and their health status.
+
+---
+
+## � Cost Optimization Strategy
 
 This project was built with a "Cloud Native & Cost Conscious" mindset:
 * **NAT Gateway Removal**: Saved ~$45/month by using public subnets.
@@ -106,10 +121,12 @@ This project was built with a "Cloud Native & Cost Conscious" mindset:
 | Alertmanager   | ✅ Done    |
 | Loki Logging   | ✅ Done    |
 | ALB Ingress    | ✅ Done    |
+| Argo CD        | ✅ Done    |
 
 ---
 
 ## 💡 Key Learnings
+- **GitOps Enforces Discipline**: Manual cluster changes are no longer allowed, ensuring the GitHub repository is always the true state.
 - **Sub-path Routing**: Requires careful configuration of both the Ingress (Order) and the Application (Root URL).
 - **EKS Defaults**: Unlike local setups, EKS requires manual installation of components like the Metrics Server.
 - **Security vs. Cost**: A public-only architecture can be secure if API access is restricted and security groups are tight.

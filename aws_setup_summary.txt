@@ -1,0 +1,177 @@
+
+
+# 🚀 Project Summary — EKS Platform Migration (Terraform-Based)
+
+## 🎯 Objective
+
+Migrate a locally built Kubernetes monitoring platform to **Amazon EKS** using **Terraform**, with:
+
+* Cost optimization
+* Security best practices
+
+---
+
+# 🏗️ Phase 1 — Infrastructure as Code (Terraform)
+
+We designed and provisioned AWS infrastructure using Terraform modules.
+
+### ✅ VPC Architecture
+
+* Public-only subnet architecture (cost optimized)
+* 2 Availability Zones
+* NAT Gateway removed (saved ~$45/month)
+* Public subnets tagged for Kubernetes ELB integration:
+
+  ```text
+  kubernetes.io/role/elb = 1
+  kubernetes.io/cluster/<cluster-name> = shared
+  ```
+* `map_public_ip_on_launch = true`
+
+💡 Design decision: Public-only architecture for learning + cost efficiency.
+
+---
+
+# ☸️ Phase 2 — EKS Cluster Provisioning
+
+Using Terraform EKS module:
+
+* Kubernetes version: 1.29
+* IRSA enabled (`enable_irsa = true`)
+* Public API endpoint restricted to our IP (CIDR-based restriction)
+* Private endpoint also enabled
+
+💡 Security best practice: API access limited to your IP.
+
+---
+
+# 🖥️ Phase 3 — Managed Node Group
+
+We configured:
+
+* Instance type: `t3.medium`
+* Min size: 1
+* Max size: 2
+* Desired size: 1
+* Multi-AZ public subnets
+
+Result:
+
+```text
+2 nodes
+STATUS: Ready
+Kubernetes v1.29
+```
+
+
+---
+
+# 💾 Phase 4 — Storage Strategy
+
+Final decision:
+
+* Removed EFS (simplified architecture)
+* Using default EBS storage class
+
+💡 Good decision for:
+
+* Cost optimization
+* Reduced operational complexity
+* Learning clarity
+
+---
+
+# 🔐 Phase 5 — IAM & IRSA Foundation
+
+* OIDC provider associated
+* IRSA enabled in EKS module
+
+This enables:
+
+* Fine-grained IAM roles per Kubernetes service account
+* No static credentials inside pods
+* Modern AWS best practice
+
+---
+
+# 💰 Cost Optimization Strategy Applied
+
+You intentionally:
+
+* Removed NAT Gateway
+* Avoided ECR (public images)
+* Avoided Route53
+* Removed EFS
+* Used single desired node
+* Chose temporary deployment (destroy after demo)
+
+Estimated running cost:
+~$120/month if left running
+
+But real usage:
+~$15–20 for a few days
+
+💡 This shows cost awareness.
+
+---
+
+# 📊 Current Architecture State
+
+```text
+Internet
+   ↓
+Public Subnets (2 AZ)
+   ↓
+EKS Control Plane (managed by AWS)
+   ↓
+2 × t3.medium worker nodes
+   ↓
+EBS-backed storage
+```
+
+Cluster Status:
+
+```bash
+kubectl get nodes
+```
+
+Result:
+
+```text
+2 Ready nodes
+```
+
+Infrastructure is stable and healthy.
+
+---
+
+
+
+WE can say:
+
+> I designed and provisioned a cost-optimized Amazon EKS cluster using Terraform with public subnet architecture, implemented IRSA for secure IAM integration, and prepared the platform for ALB-based ingress and monitoring stack deployment.
+
+That is a strong statement.
+
+---
+
+# 🏁 Current Project Stage
+
+| Component      | Status    |
+| -------------- | --------- |
+| VPC            | ✅ Done    |
+| EKS            | ✅ Done    |
+| Node Group     | ✅ Done    |
+| IRSA           | ✅ Enabled |
+| Storage        | ✅ EBS     |
+| ALB Controller | ⏳ Next    |
+
+---
+
+
+
+helm upgrade monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --reuse-values \
+  --set alertmanager.alertmanagerSpec.externalUrl=http://k8s-monitoringgroup-94ba417c50-1275481775.us-east-1.elb.amazonaws.com/alertmanager
+

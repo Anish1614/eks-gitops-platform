@@ -24,6 +24,10 @@ module "eks" {
       min_size       = 1
       max_size       = 2
       desired_size   = 1
+
+      labels = {
+        role = "worker"
+      }
     }
   }
 }

@@ -164,14 +164,26 @@ That is a strong statement.
 | Node Group     | ✅ Done    |
 | IRSA           | ✅ Enabled |
 | Storage        | ✅ EBS     |
-| ALB Controller | ⏳ Next    |
+| ALB Controller | ✅ Done    |
+| Prometheus     | ✅ Done    |
+| Grafana        | ✅ Done    |
+| Loki           | ✅ Done    |
+| Alertmanager   | ✅ Done    |
 
 ---
 
+# 📊 Phase 6 — Observability & Access
 
+We successfully deployed the full monitoring stack on EKS:
 
-helm upgrade monitoring prometheus-community/kube-prometheus-stack \
-  --namespace monitoring \
-  --reuse-values \
-  --set alertmanager.alertmanagerSpec.externalUrl=http://k8s-monitoringgroup-94ba417c50-1275481775.us-east-1.elb.amazonaws.com/alertmanager
+* **Ingress Groups**: Shared a single ALB for Nginx, Grafana, and Alertmanager.
+* **Grafana**: Served at `/grafana` with `root_url` and `serve_from_sub_path` enabled.
+* **Alertmanager**: Served at `/alertmanager` with `externalUrl` configured.
+* **Loki**: Centralized log aggregation for the entire cluster.
+
+---
+
+# 🚀 Final Statement
+
+> I designed and provisioned a cost-optimized, production-ready Amazon EKS platform using Terraform. The architecture features a public-only VPC to minimize costs, secure IAM integration via IRSA, and a consolidated ALB Ingress strategy. The platform is fully observable with a centralized Prometheus, Grafana, Loki, and Alertmanager stack, all configured for efficient sub-path routing.
 
